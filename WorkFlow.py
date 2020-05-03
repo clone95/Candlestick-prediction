@@ -1,7 +1,16 @@
-from Downloader import Downloader
-from DataProcessor import DataProcessor
-downloader = Downloader(source_folder = 'tickers', destination_folder = 'raw_data', tickers_file='test_tickers')
+from DatasetGenerator import DatasetGenerator
 
-#downloader.download_interval_tickers('1h', '2mo')
-downloader.download_start_end_tickers('2018-06-01', '2019-12-30', '1h')
+generator = DatasetGenerator(   
+                                source_folder = 'tickers', 
+                                root_raw_folder = 'raw_data',
+                                dataset_folder = 'datasets', 
+                                tickers_file='test_tickers',
+                                start = '2018-06-05',
+                                end = '2019-12-30',
+                                delta = '1h'    
+                            )
+
+#generator.download_start_end_tickers()
+
+generator.label_raw_data(window_size = 9, n_bins = 4)
 
