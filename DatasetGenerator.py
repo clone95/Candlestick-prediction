@@ -9,7 +9,7 @@ class DatasetGenerator():
 
         self.source_folder = source_folder
         self.root_raw_folder = root_raw_folder
-        self.tickers_file = f'tickers/{tickers_file}.txt'
+        self.tickers_file = f'./tickers/{tickers_file}.txt'
         self.root_processed_folder = root_processed_folder 
         self.start = start
         self.end = end
@@ -37,8 +37,6 @@ class DatasetGenerator():
 
             data.to_csv(f'{self.raw_data_folder}/{ticker}.csv')
 
-            self.add_hours(self.raw_data_folder)
-
 
     def add_hours(self, raw_data_folder):
 
@@ -48,7 +46,10 @@ class DatasetGenerator():
             raw_data = pd.read_csv(f'{raw_data_folder}/{ticker}') 
 
             raw_data['Hour'] = raw_data.groupby('Date').cumcount() + 1
-            raw_data['Hour'] = raw_data['Hour'].apply(lambda x: f'0{x}:00:00' if len(str(x))==1 else f'{x}:00:00')  
+            if self.delta == '1h':
+                raw_data['Hour'] = raw_data['Hour'].apply(lambda x: f'0{x}:00:00' if len(str(x))==1 else f'{x}:00:00')  
+            else:
+                raw_data['Hour'] = raw_data['Hour'].apply(lambda x: f'0{x}:00:00' if len(str(x))==1 else f'00:00:00')  
             raw_data['Date'] = raw_data['Date'] + ' ' + raw_data['Hour']
 
             for col in numbs:
@@ -57,25 +58,34 @@ class DatasetGenerator():
             raw_data.to_csv(f'{raw_data_folder}/{ticker}')
             
 
-    def label_raw_data(self, window_size, n_bins):
+    def label_raw_data(self, abs_bins, perc_bins):
         
         raw_dataframes = os.listdir(self.raw_data_folder)
 
         if not len(raw_dataframes) == len(self.tickers):
             raise 'Not all tickers data present in the raw folder'
-        ensure_dir_exists()
+        ensure_dir_exists(self.root_processed_folder)
+        date_col_name = 'Datetime' if self.delta[-1] == 'm' else 'Date'
         for ticker in raw_dataframes:
             # read data and set Date as index
-            ticker_data = pd.read_csv(f'{self.raw_data_folder}/{ticker}', index_col=0, parse_dates=True)
-            ticker_data['Date'] = pd.to_datetime(ticker_data['Date'])
-            ticker_data.set_index('Date', inplace=True)
+            ticker_data = pd.read_csv(f'{self.raw_data_folder}/{ticker}', parse_dates=True)
+            ticker_data[date_col_name] = pd.to_datetime(ticker_data[date_col_name])
+            ticker_data.set_index(date_col_name, inplace=True)
+            # calculate and assign absolute variation bins
+            close_price = ticker_data['Close'].values
+            ticker_data['abs_bins'] = pd.qcut(close_price, q=abs_bins, labels=[x for x in range(0, abs_bins)])
+            # calculate and assigne % change bins
+            ticker_data['pct_change'] = ticker_data['Close'].pct_change()
+            ticker_data['pct_change_bins'] = pd.qcut(ticker_data['pct_change'], q=perc_bins, labels=[x for x in range(0, perc_bins)])
+            ticker_data.to_csv(f'{self.root_processed_folder}/{ticker}')
+
+
+    def build_dataset(self, window_size):
+        # da rinominare i dataframe processati 
+        processed_dataframes = os.listdir(self.root_processed_folder)
             # remove last rows 
             rows_to_cut = len(ticker_data) % window_size
             ticker_data = ticker_data[:-rows_to_cut]
-            # calculate and assign bins
-            ticker_data.to_csv(f'{ticker}.csv')
-            close_prices = ticker_data['Close'].values
-            ticker_data['bins'] = pd.qcut(close_prices, q=n_bins, labels= [x for x in range(0, n_bins)])
-            ticker_data.to_csv(f'{ticker}')
+
         
         

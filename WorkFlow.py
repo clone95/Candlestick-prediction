@@ -1,16 +1,21 @@
 from DatasetGenerator import DatasetGenerator
+import os
+
 
 generator = DatasetGenerator(   
                                 source_folder = 'tickers', 
                                 root_raw_folder = 'raw_data',
-                                dataset_folder = 'datasets', 
+                                root_processed_folder = 'processed_data', 
                                 tickers_file='test_tickers',
-                                start = '2018-06-05',
-                                end = '2019-12-30',
-                                delta = '1h'    
+                                # year-month-day
+                                start = '2018-06-30',
+                                end = '2019-10-03',
+                                delta = '1d'    
                             )
 
 #generator.download_start_end_tickers()
 
-generator.label_raw_data(window_size = 9, n_bins = 4)
+generator.label_raw_data(abs_bins = 4, perc_bins = 4)
+
+generator.build_dataset(window_size=5)
 

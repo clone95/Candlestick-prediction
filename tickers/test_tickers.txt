@@ -1,1 +1,8 @@
-MSFT
+HD
+AAL
+AAPL
+BBY
+C
+CVS
+CVX
+IBM
