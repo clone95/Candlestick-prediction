@@ -1,28 +1,37 @@
-import os  
+import os, io
 from utils import *
 import yfinance as yf
+import mplfinance as mpf
+import math
+import matplotlib.pyplot as plt
 import pandas as pd
+import split_folders
+from IPython.core.interactiveshell import InteractiveShell
+InteractiveShell.ast_node_interactivity = "all"
+from sklearn.model_selection import train_test_split
+
 
 class DatasetGenerator():
 
-    def __init__(self, source_folder, root_raw, root_processed, root_dataset, tickers_file, start, end, delta):
+    def __init__(self, source_folder, root_raw, root_processed_pandas, root_processed_images, root_datasets, tickers_file, start, end, delta):
 
         self.source_folder = source_folder
+        self.exceptions = []
 
         self.root_raw = root_raw
-        self.root_processed = root_processed 
-        self.root_dataset = root_dataset 
+        self.root_processed_pandas = root_processed_pandas 
+        self.root_processed_images = root_processed_images 
 
         self.tickers_file = f'./tickers/{tickers_file}.txt'
-        self.root_processed = root_processed 
+        #self.root_processed = root_processed 
         self.start = start
         self.end = end
         self.delta = delta
         
         self.raw_data_folder = f'{self.root_raw}/period/{self.start}---{self.end}---{delta}'
-        self.processed_data_folder = f'{self.root_processed}/period/{self.start}---{self.end}---{delta}'
-        self.dataset_folder = f'{self.root_dataset}/period/{self.start}---{self.end}---{delta}'
-
+        self.processed_data_folder = f'{self.root_processed_pandas}/period/{self.start}---{self.end}---{delta}'
+        self.processed_images_folder = f'{self.root_processed_images}/period/{self.start}---{self.end}---{delta}'
+        self.root_datasets = root_datasets
         ensure_dir_exists(self.raw_data_folder)
 
         with open(self.tickers_file, 'r') as file:
@@ -46,9 +55,10 @@ class DatasetGenerator():
 
 
     def add_hours(self, raw_data_folder):
-
+        
         numbs = ['Open', 'Close', 'High', 'Low', 'Adj Close', 'Volume']
 
+        # add "hour" field if not present
         for ticker in os.listdir(raw_data_folder):
             raw_data = pd.read_csv(f'{raw_data_folder}/{ticker}') 
 
@@ -88,19 +98,67 @@ class DatasetGenerator():
             ticker_data.to_csv(f'{self.processed_data_folder}/{ticker}')
 
 
-    def build_dataset(self, window_size):
+    def pandas_to_images(self, window_size):
 
-        ensure_dir_exists(self.dataset_folder)
+        destination = f'{self.processed_images_folder}---{window_size}'
+        ensure_dir_exists(destination)
         processed_dataframes = os.listdir(self.processed_data_folder)
 
+        mc = mpf.make_marketcolors(up='g', down='r')
+        s  = mpf.make_mpf_style(base_mpl_style='seaborn', marketcolors=mc, rc={    
+                'lines.linestyle': '-',
+                'lines.linewidth' : 3.5,
+                'grid.alpha':0 
+            })
+        kwargs = dict(type='candle',mav=(2 ,4, 6),figratio=(10,8),figscale=0.75)
+
         for ticker in processed_dataframes:
+
+            example_index = 0
+            examples = []
             ticker_name = ticker.split('.')[0]
             ticker_data = pd.read_csv(f'{self.processed_data_folder}/{ticker}', parse_dates=True)
-            # remove last rows 
+            # remove last rows
             rows_to_cut = len(ticker_data) % window_size
             ticker_data = ticker_data[:-rows_to_cut]
-            ensure_dir_exists(f'{self.dataset_folder}/{ticker_name}')
+
+            # set index as date
+            ticker_data['Date'] = pd.to_datetime(ticker_data['Date'])
+            ticker_data.set_index('Date', inplace=True)
+            labels = ticker_data['pct_change_bins']
+
+            different_classes = [int(x) for x in list(set(labels)) if not math.isnan(x) == True]
+            for label in different_classes:
+                ensure_dir_exists(f'{destination}/{label}')
+
+            # build images dataset
+            for i in range(0, len(ticker_data)-window_size-1):
+                
+                window_data = ticker_data.iloc[i:i+window_size]                
+                example = (example_index, labels.iloc[i+window_size+1])
+                examples.append(example)
+                example_index += 1
+
+                mpf.plot(window_data,**kwargs,style=s, savefig=dict(fname=
+                    f'{destination}/{int(labels.iloc[i+window_size])}/{ticker_name}_{example_index}.jpg',dpi=100,pad_inches=0.25))
+                
+                plt.close('all')
+ 
+    
+    def build_dataset(self, window_size, ratio):
+
+        experiment_folder = f'{self.processed_images_folder}---{window_size}'
+        experiment_name = experiment_folder.split('/')[-1]
+        split_folders.ratio(experiment_folder, output=f'{self.root_datasets}/{experiment_name}', seed=1, ratio=ratio) 
+
+
+
+
             
+
+
+
+
                         
 
         
