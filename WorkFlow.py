@@ -18,7 +18,7 @@ generator = DatasetGenerator(
 
 generator.download_start_end_tickers()
 
-generator.label_raw_data(abs_bins = 4, perc_bins = 3)
+generator.label_raw_data(abs_bins = 4, perc_bins = 4)
 
 generator.pandas_to_images(window_size=10)
 #

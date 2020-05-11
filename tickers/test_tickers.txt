@@ -5,4 +5,3 @@ BBY
 C
 CVS
 CVX
-IBM
