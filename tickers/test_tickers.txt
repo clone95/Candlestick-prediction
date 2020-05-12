@@ -1,7 +1,2 @@
-HD
-AAL
-AAPL
-BBY
-C
-CVS
-CVX
+ABT
+ABBV

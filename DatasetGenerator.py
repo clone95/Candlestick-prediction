@@ -29,7 +29,7 @@ class DatasetGenerator():
         self.end = end
         self.delta = delta
         
-        self.raw_data_folder = f'{self.root_raw}/{self.start}---{self.end}---{delta}'
+        self.raw_data_folder = os.path.join(self.root_raw,tickers_file,self.start + '-'+ self.end,delta)
         self.processed_data_folder = f'{self.root_processed_pandas}/{self.start}---{self.end}---{delta}'
         self.processed_images_folder = f'{self.root_processed_images}/{self.start}---{self.end}---{delta}'
         self.root_datasets = root_datasets
@@ -88,6 +88,8 @@ class DatasetGenerator():
         for ticker in raw_dataframes:
             # read data and set Date as index
             ticker_data = pd.read_csv(f'{self.raw_data_folder}/{ticker}', parse_dates=True)
+            ticker_data.loc[ticker_data['Open'] < ticker_data['Close'], 'class'] = 0
+            ticker_data.loc[ticker_data['Open'] >= ticker_data['Close'], 'class'] = 1
             ticker_data.to_csv(f'{self.processed_data_folder}---oc/{ticker}')
 
 
@@ -114,10 +116,16 @@ class DatasetGenerator():
             ticker_data.to_csv(f'{self.processed_data_folder}---pct/{ticker}')
 
 
-    def pandas_to_images(self, window_size):
-
-        destination = f'{self.processed_images_folder}---{window_size}'
-        ensure_dir_exists(destination)
+    def pandas_to_images(self, window_size, class_type=None):
+        
+        if class_type == 'oc':
+            destination = f'{self.processed_images_folder}---{window_size}---oc'
+            ensure_dir_exists(destination)
+        else:
+            destination = f'{self.processed_images_folder}---{window_size}---pct'
+            ensure_dir_exists(destination)
+        
+        self.processed_data_folder = self.processed_data_folder + '---' + class_type
         processed_dataframes = os.listdir(self.processed_data_folder)
 
         mc = mpf.make_marketcolors(up='g', down='r')
@@ -163,7 +171,7 @@ class DatasetGenerator():
     
     def build_dataset(self, window_size, ratio):
 
-        experiment_folder = f'{self.processed_images_folder}---{window_size}'
+        experiment_folder = f'{self.processed_images_folder}---{window_size}---oc'
         experiment_name = experiment_folder.split('/')[-1]
         split_folders.ratio(experiment_folder, output=f'{self.root_datasets}/{experiment_name}', seed=1, ratio=ratio) 
 

@@ -16,15 +16,15 @@ generator = DatasetGenerator(
                                 delta = '1d'    
                             )
 
-#generator.download_start_end_tickers()
+generator.download_start_end_tickers()
 
 #generator.label_raw_data_percentage(abs_bins = 4, perc_bins = 4)
 
-generator.label_raw_data_open_close()
+#generator.label_raw_data_open_close()
 
-#generator.pandas_to_images(window_size=10)
+#generator.pandas_to_images(window_size=10, class_type='oc')
 #
-#transformer = ImageTransformer('processed/image_data/period/2016-06-30---2019-10-03---1d---10')
+#transformer = ImageTransformer('processed/image_data/2016-06-30---2019-10-03---1d---10---oc')
 #
 #transformer.crop_images()
 #
