@@ -29,7 +29,7 @@ class DatasetGenerator():
         self.end = end
         self.delta = delta
         
-        self.raw_data_folder = os.path.join(self.root_raw,tickers_file,self.start + '-'+ self.end,delta)
+        self.raw_data_folder = os.path.join(self.root_raw,tickers_file,self.start + '_'+ self.end,delta)
         self.processed_data_folder = f'{self.root_processed_pandas}/{self.start}---{self.end}---{delta}'
         self.processed_images_folder = f'{self.root_processed_images}/{self.start}---{self.end}---{delta}'
         self.root_datasets = root_datasets
@@ -53,14 +53,19 @@ class DatasetGenerator():
                 threads = True, )
 
             data.to_csv(f'{self.raw_data_folder}/{ticker}.csv')
+        
+        # add hours to datetimes
+        self.add_hours()
 
 
-    def add_hours(self, raw_data_folder):
+    def add_hours(self):
         
         numbs = ['Open', 'Close', 'High', 'Low', 'Adj Close', 'Volume']
 
         # add "hour" field if not present
-        for ticker in os.listdir(raw_data_folder):
+        for ticker in os.listdir(self.raw_data_folder):
+            print(ticker)
+            pass
             raw_data = pd.read_csv(f'{raw_data_folder}/{ticker}') 
 
             raw_data['Hour'] = raw_data.groupby('Date').cumcount() + 1

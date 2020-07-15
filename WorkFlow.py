@@ -1,23 +1,37 @@
-from DatasetGenerator import DatasetGenerator
+from DataDownloader import DataDownloader
+
+from BaseLabeler import BaseLabeler
+from CatPercentChangeLabeler import CatPercentChangeLabeler
+from TrendLabeler import TrendLabeler
+
 from ImageTransformer import ImageTransformer
+
 import os
 
+root_raw = 'raw_data'
+source_tickers = 'tickers'
+tickers = 'test_tickers'
+start = '2018-07-30'
+end = '2020-02-02'
+delta = '1h'
+start_end = start + '_' + end
 
-generator = DatasetGenerator(   
-                                source_folder = 'tickers', 
-                                root_raw = 'raw_data',
-                                root_processed_pandas = 'processed/processed_data', 
-                                root_processed_images = 'processed/image_data',
-                                root_datasets = 'datasets',
-                                tickers_file = 'test_tickers',
-                                # year-month-day
-                                start = '2016-06-30',
-                                end = '2019-10-03',
-                                delta = '1d'    
-                            )
+#generator = DataDownloader (   
+#                                source_folder = 'tickers', 
+#                                root_raw = root_raw,
+#                                tickers_file = test_tickers,
+#                                # year-month-day
+#                                start = start,
+#                                end = end,
+#                                delta = delta 
+#                            )
+#
+#generator.download_data()
+#base_labeler = BaseLabeler(root_raw, tickers, start_end, delta)
+perc_labeler = CatPercentChangeLabeler(root_raw, tickers, start_end, delta, window=10, num_classes=5)
+perc_labeler.labeling_workflow()
 
-generator.download_start_end_tickers()
-
+    #labeler.funcname()
 #generator.label_raw_data_percentage(abs_bins = 4, perc_bins = 4)
 
 #generator.label_raw_data_open_close()
