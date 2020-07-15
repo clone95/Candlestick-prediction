@@ -7,12 +7,11 @@ import math
 
 class CatPercentChangeLabeler(BaseLabeler):
     
-    def __init__(self, raw_root_dir, tickers_dir, dates_dir, delta_dir, window, num_classes):
+    def __init__(self, raw_root_dir, tickers_dir, dates_dir, delta_dir, num_classes):
         super().__init__(raw_root_dir, tickers_dir, dates_dir, delta_dir)
-        self.window = window
         self.num_classes = num_classes
-        self.labeling_type = f'cat_pctChg_w{window}_nc{num_classes}'
-        self.labeled_dir = os.path.join('labeled', tickers_dir, dates_dir, delta_dir, self.labeling_type, 'csv')
+        self.labeling_type = f'cat_pctChg_nc{num_classes}'
+        self.labeled_dir = os.path.join('labeled', tickers_dir, dates_dir, delta_dir, self.labeling_type)
         ensure_dir_exists(self.labeled_dir)
 
 
